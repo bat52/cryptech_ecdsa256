@@ -33,14 +33,14 @@
 `timescale 1ns / 1ps
 
 module brom_p256_zero
-   (
-		//input		wire				clk,
-		//input		wire	[ 3-1:0]	b_addr,
-		output	wire	[32-1:0]	b_out
-    );
+  (
+   //input		wire			clk,
+   //input		wire	[ 3-1:0]	b_addr,
+   output wire [32-1:0] b_out
+   );
 
 
-	assign b_out = {32{1'b0}};
+   assign b_out = {32{1'b0}};
 
    //
    // Output Registers
@@ -52,19 +52,19 @@ module brom_p256_zero
 
    //
    // Read-Only Port B
-	//
-	//always @(posedge clk)
-		//
-		//case (b_addr)
-			//3'b000:	bram_reg_b <= 32'h00000000;
-			//3'b001:	bram_reg_b <= 32'h00000000;
-			//3'b010:	bram_reg_b <= 32'h00000000;
-			//3'b011:	bram_reg_b <= 32'h00000000;
-			//3'b100:	bram_reg_b <= 32'h00000000;
-			//3'b101:	bram_reg_b <= 32'h00000000;
-			//3'b110:	bram_reg_b <= 32'h00000000;
-			//3'b111:	bram_reg_b <= 32'h00000000;
-		//endcase
+   //
+   //always @(posedge clk)
+   //
+   //case (b_addr)
+   //3'b000:	bram_reg_b <= 32'h00000000;
+   //3'b001:	bram_reg_b <= 32'h00000000;
+   //3'b010:	bram_reg_b <= 32'h00000000;
+   //3'b011:	bram_reg_b <= 32'h00000000;
+   //3'b100:	bram_reg_b <= 32'h00000000;
+   //3'b101:	bram_reg_b <= 32'h00000000;
+   //3'b110:	bram_reg_b <= 32'h00000000;
+   //3'b111:	bram_reg_b <= 32'h00000000;
+   //endcase
 
 
 endmodule

@@ -43,236 +43,236 @@
 module tb_curve_multiplier_256;
 
 
-		//
-		// Test Vectors
-		//
-	localparam	[255:0]	K_1	= 256'h70a12c2db16845ed56ff68cfc21a472b3f04d7d6851bf6349f2d7d5b3452b38a;
-	localparam	[255:0]	PX_1	= 256'h8101ece47464a6ead70cf69a6e2bd3d88691a3262d22cba4f7635eaff26680a8;
-	localparam	[255:0]	PY_1	= 256'hd8a12ba61d599235f67d9cb4d58f1783d3ca43e78f0a5abaa624079936c0c3a9;
+   //
+   // Test Vectors
+   //
+   localparam	[255:0]	K_1	= 256'h70a12c2db16845ed56ff68cfc21a472b3f04d7d6851bf6349f2d7d5b3452b38a;
+   localparam	[255:0]	PX_1	= 256'h8101ece47464a6ead70cf69a6e2bd3d88691a3262d22cba4f7635eaff26680a8;
+   localparam	[255:0]	PY_1	= 256'hd8a12ba61d599235f67d9cb4d58f1783d3ca43e78f0a5abaa624079936c0c3a9;
 
-	localparam	[255:0]	K_2	= 256'h580ec00d856434334cef3f71ecaed4965b12ae37fa47055b1965c7b134ee45d0;
-	localparam	[255:0]	PX_2	= 256'h7214bc9647160bbd39ff2f80533f5dc6ddd70ddf86bb815661e805d5d4e6f27c;
-	localparam	[255:0]	PY_2	= 256'h8b81e3e977597110c7cf2633435b2294b72642987defd3d4007e1cfc5df84541;
+   localparam	[255:0]	K_2	= 256'h580ec00d856434334cef3f71ecaed4965b12ae37fa47055b1965c7b134ee45d0;
+   localparam	[255:0]	PX_2	= 256'h7214bc9647160bbd39ff2f80533f5dc6ddd70ddf86bb815661e805d5d4e6f27c;
+   localparam	[255:0]	PY_2	= 256'h8b81e3e977597110c7cf2633435b2294b72642987defd3d4007e1cfc5df84541;
 
-	localparam	[255:0]	K_3	= 256'hffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551;
-	localparam	[255:0]	PX_3	= 256'h0000000000000000000000000000000000000000000000000000000000000000;
-	localparam	[255:0]	PY_3	= 256'h0000000000000000000000000000000000000000000000000000000000000000;
-		
-		
-		//
-		// Core Parameters
-		//
-	localparam	WORD_COUNTER_WIDTH	=  3;
-	localparam	OPERAND_NUM_WORDS		=  8;
-	
+   localparam	[255:0]	K_3	= 256'hffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551;
+   localparam	[255:0]	PX_3	= 256'h0000000000000000000000000000000000000000000000000000000000000000;
+   localparam	[255:0]	PY_3	= 256'h0000000000000000000000000000000000000000000000000000000000000000;
 
-		//
-		// Clock (100 MHz)
-		//
-	reg clk = 1'b0;
-	always #5 clk = ~clk;
 
-	
-		//
-		// Inputs, Outputs
-		//
-	reg	rst_n;
-	reg	ena;
-	wire	rdy;
+   //
+   // Core Parameters
+   //
+   localparam	WORD_COUNTER_WIDTH	=  3;
+   localparam	OPERAND_NUM_WORDS	=  8;
 
-	
-		//
-		// Buffers (K, PX, PY)
-		//
-	wire	[WORD_COUNTER_WIDTH-1:0]	core_k_addr;
-	wire	[WORD_COUNTER_WIDTH-1:0]	core_px_addr;
-	wire	[WORD_COUNTER_WIDTH-1:0]	core_py_addr;
-	
-	wire										core_px_wren;
-	wire										core_py_wren;
-	
-	wire	[                32-1:0]	core_k_data;
-	wire	[                32-1:0]	core_px_data;
-	wire	[                32-1:0]	core_py_data;
-	
-	reg	[WORD_COUNTER_WIDTH-1:0]	tb_k_addr;
-	reg	[WORD_COUNTER_WIDTH-1:0]	tb_pxy_addr;
-	
-	reg										tb_k_wren;
-	
-	reg	[                  31:0]	tb_k_data;
-	wire	[                  31:0]	tb_px_data;
-	wire	[                  31:0]	tb_py_data;
-	
-	bram_1rw_1ro_readfirst # (.MEM_WIDTH(32), .MEM_ADDR_BITS(WORD_COUNTER_WIDTH))
-	bram_k
-	(	.clk(clk),
-		.a_addr(tb_k_addr), .a_wr(tb_k_wren), .a_in(tb_k_data), .a_out(),
-		.b_addr(core_k_addr), .b_out(core_k_data)
+
+   //
+   // Clock (100 MHz)
+   //
+   reg clk = 1'b0;
+   always #5 clk = ~clk;
+
+
+   //
+   // Inputs, Outputs
+   //
+   reg rst_n;
+   reg ena;
+   wire rdy;
+
+
+   //
+   // Buffers (K, PX, PY)
+   //
+   wire [WORD_COUNTER_WIDTH-1:0] core_k_addr;
+   wire [WORD_COUNTER_WIDTH-1:0] core_px_addr;
+   wire [WORD_COUNTER_WIDTH-1:0] core_py_addr;
+
+   wire 			 core_px_wren;
+   wire 			 core_py_wren;
+
+   wire [                32-1:0] core_k_data;
+   wire [                32-1:0] core_px_data;
+   wire [                32-1:0] core_py_data;
+
+   reg [WORD_COUNTER_WIDTH-1:0]  tb_k_addr;
+   reg [WORD_COUNTER_WIDTH-1:0]  tb_pxy_addr;
+
+   reg 				 tb_k_wren;
+
+   reg [                  31:0]  tb_k_data;
+   wire [                  31:0] tb_px_data;
+   wire [                  31:0] tb_py_data;
+
+   bram_1rw_1ro_readfirst # (.MEM_WIDTH(32), .MEM_ADDR_BITS(WORD_COUNTER_WIDTH))
+   bram_k
+     (	.clk(clk),
+	.a_addr(tb_k_addr), .a_wr(tb_k_wren), .a_in(tb_k_data), .a_out(),
+	.b_addr(core_k_addr), .b_out(core_k_data)
 	);
-	
-	bram_1rw_1ro_readfirst # (.MEM_WIDTH(32), .MEM_ADDR_BITS(WORD_COUNTER_WIDTH))
-	bram_px
-	(	.clk(clk),
-		.a_addr(core_px_addr), .a_wr(core_px_wren), .a_in(core_px_data), .a_out(),
-		.b_addr(tb_pxy_addr), .b_out(tb_px_data)
-	);
-	
-	bram_1rw_1ro_readfirst # (.MEM_WIDTH(32), .MEM_ADDR_BITS(WORD_COUNTER_WIDTH))
-	bram_py
-	(	.clk(clk),
-		.a_addr(core_py_addr), .a_wr(core_py_wren), .a_in(core_py_data), .a_out(),
-		.b_addr(tb_pxy_addr), .b_out(tb_py_data)
-	);
-	
-	
-		//
-		// UUT
-		//
-	curve_mul_256 uut
-	(
-		.clk			(clk),
-		.rst_n		(rst_n),
-		
-		.ena			(ena),
-		.rdy			(rdy),
-		
-		.k_addr		(core_k_addr),
-		.rx_addr		(core_px_addr),
-		.ry_addr		(core_py_addr),
-		
-		.rx_wren		(core_px_wren),
-		.ry_wren		(core_py_wren),
-		
-		.k_din		(core_k_data),
-		
-		.rx_dout		(core_px_data),
-		.ry_dout		(core_py_data)
-	);
-		
-		
-		//
-		// Testbench Routine
-		//
-	reg ok = 1;
-	initial begin
-		
-			/* initialize control inputs */
-		rst_n		= 0;
-		ena		= 0;
-		
-			/* wait for some time */
-		#200;
-		
-			/* de-assert reset */
-		rst_n		= 1;
-		
-			/* wait for some time */
-		#100;		
-		
-			/* run tests */
-		test_curve_multiplier(K_1, PX_1, PY_1);
-		test_curve_multiplier(K_2, PX_2, PY_2);
-		test_curve_multiplier(K_3, PX_3, PY_3);
-		
-			/* print result */
-		if (ok)	$display("tb_curve_multiplier_256: SUCCESS");
-		else		$display("tb_curve_multiplier_256: FAILURE");
-		//
-		//$finish;
-		//
-	end
-	
-	
-		//
-		// Test Task
-		//	
-	reg		p_ok;
-	
-	integer	w;
 
-	task test_curve_multiplier;
-	
-		input	[255:0]	k;
-		input	[255:0]	px;
-		input	[255:0]	py;
-		
-		reg	[255:0]	k_shreg;
-		reg	[255:0]	px_shreg;
-		reg	[255:0]	py_shreg;
-		
-		begin
-		
-				/* start filling memories */
-			tb_k_wren = 1;
-			
-				/* initialize shift registers */
-			k_shreg = k;
-			
-				/* write all the words */
-			for (w=0; w<OPERAND_NUM_WORDS; w=w+1) begin
-				
-					/* set addresses */
-				tb_k_addr = w[WORD_COUNTER_WIDTH-1:0];
-				
-					/* set data words */
-				tb_k_data	= k_shreg[31:0];
-				
-					/* shift inputs */
-				k_shreg = {{32{1'bX}}, k_shreg[255:32]};
-				
-					/* wait for 1 clock tick */
-				#10;
-				
-			end
-			
-				/* wipe addresses */
-			tb_k_addr = {WORD_COUNTER_WIDTH{1'bX}};
-			
-				/* wipe data words */
-			tb_k_data = {32{1'bX}};
-			
-				/* stop filling memories */
-			tb_k_wren = 0;
-			
-				/* start operation */
-			ena = 1;
-			
-				/* clear flag */
-			#10 ena = 0;
-			
-				/* wait for operation to complete */
-			while (!rdy) #10;
-			
-				/* read result */
-			for (w=0; w<OPERAND_NUM_WORDS; w=w+1) begin
-				
-					/* set address */
-				tb_pxy_addr = w[WORD_COUNTER_WIDTH-1:0];
-				
-					/* wait for 1 clock tick */
-				#10;
-				
-					/* store data word */
-				px_shreg = {tb_px_data, px_shreg[255:32]};
-				py_shreg = {tb_py_data, py_shreg[255:32]};
+   bram_1rw_1ro_readfirst # (.MEM_WIDTH(32), .MEM_ADDR_BITS(WORD_COUNTER_WIDTH))
+   bram_px
+     (	.clk(clk),
+	.a_addr(core_px_addr), .a_wr(core_px_wren), .a_in(core_px_data), .a_out(),
+	.b_addr(tb_pxy_addr), .b_out(tb_px_data)
+	);
 
-			end
-			
-				/* compare */
-			p_ok =	(px_shreg == px) &&
-						(py_shreg == py);
+   bram_1rw_1ro_readfirst # (.MEM_WIDTH(32), .MEM_ADDR_BITS(WORD_COUNTER_WIDTH))
+   bram_py
+     (	.clk(clk),
+	.a_addr(core_py_addr), .a_wr(core_py_wren), .a_in(core_py_data), .a_out(),
+	.b_addr(tb_pxy_addr), .b_out(tb_py_data)
+	);
 
-				/* display results */
-			$display("test_curve_multiplier(): %s", p_ok ? "OK" : "ERROR");
-			
-				/* update global flag */
-			ok = ok && p_ok;
-		
-		end
-		
-	endtask
-	
+
+   //
+   // UUT
+   //
+   curve_mul_256 uut
+     (
+      .clk			(clk),
+      .rst_n		(rst_n),
+
+      .ena			(ena),
+      .rdy			(rdy),
+
+      .k_addr		(core_k_addr),
+      .rx_addr		(core_px_addr),
+      .ry_addr		(core_py_addr),
+
+      .rx_wren		(core_px_wren),
+      .ry_wren		(core_py_wren),
+
+      .k_din		(core_k_data),
+
+      .rx_dout		(core_px_data),
+      .ry_dout		(core_py_data)
+      );
+
+
+   //
+   // Testbench Routine
+   //
+   reg 				 ok = 1;
+   initial begin
+
+      /* initialize control inputs */
+      rst_n		= 0;
+      ena		= 0;
+
+      /* wait for some time */
+      #200;
+
+      /* de-assert reset */
+      rst_n		= 1;
+
+      /* wait for some time */
+      #100;
+
+      /* run tests */
+      test_curve_multiplier(K_1, PX_1, PY_1);
+      test_curve_multiplier(K_2, PX_2, PY_2);
+      test_curve_multiplier(K_3, PX_3, PY_3);
+
+      /* print result */
+      if (ok)	$display("tb_curve_multiplier_256: SUCCESS");
+      else	$display("tb_curve_multiplier_256: FAILURE");
+      //
+      //$finish;
+      //
+   end
+
+
+   //
+   // Test Task
+   //
+   reg		p_ok;
+
+   integer	w;
+
+   task test_curve_multiplier;
+
+      input	[255:0]	k;
+      input [255:0] 	px;
+      input [255:0] 	py;
+
+      reg [255:0] 	k_shreg;
+      reg [255:0] 	px_shreg;
+      reg [255:0] 	py_shreg;
+
+      begin
+
+	 /* start filling memories */
+	 tb_k_wren = 1;
+
+	 /* initialize shift registers */
+	 k_shreg = k;
+
+	 /* write all the words */
+	 for (w=0; w<OPERAND_NUM_WORDS; w=w+1) begin
+
+	    /* set addresses */
+	    tb_k_addr = w[WORD_COUNTER_WIDTH-1:0];
+
+	    /* set data words */
+	    tb_k_data	= k_shreg[31:0];
+
+	    /* shift inputs */
+	    k_shreg = {{32{1'bX}}, k_shreg[255:32]};
+
+	    /* wait for 1 clock tick */
+	    #10;
+
+	 end
+
+	 /* wipe addresses */
+	 tb_k_addr = {WORD_COUNTER_WIDTH{1'bX}};
+
+	 /* wipe data words */
+	 tb_k_data = {32{1'bX}};
+
+	 /* stop filling memories */
+	 tb_k_wren = 0;
+
+	 /* start operation */
+	 ena = 1;
+
+	 /* clear flag */
+	 #10 ena = 0;
+
+	 /* wait for operation to complete */
+	 while (!rdy) #10;
+
+	 /* read result */
+	 for (w=0; w<OPERAND_NUM_WORDS; w=w+1) begin
+
+	    /* set address */
+	    tb_pxy_addr = w[WORD_COUNTER_WIDTH-1:0];
+
+	    /* wait for 1 clock tick */
+	    #10;
+
+	    /* store data word */
+	    px_shreg = {tb_px_data, px_shreg[255:32]};
+	    py_shreg = {tb_py_data, py_shreg[255:32]};
+
+	 end
+
+	 /* compare */
+	 p_ok =	(px_shreg == px) &&
+	       (py_shreg == py);
+
+	 /* display results */
+	 $display("test_curve_multiplier(): %s", p_ok ? "OK" : "ERROR");
+
+	 /* update global flag */
+	 ok = ok && p_ok;
+
+      end
+
+   endtask
+
 endmodule
 
 

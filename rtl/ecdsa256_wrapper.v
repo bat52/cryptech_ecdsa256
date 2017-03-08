@@ -32,11 +32,11 @@
 
 module ecdsa256_wrapper
   (
-   input wire          clk,
-   input wire          rst_n,
+   input wire 	       clk,
+   input wire 	       reset_n,
 
-   input wire          cs,
-   input wire          we,
+   input wire 	       cs,
+   input wire 	       we,
 
    input wire [5: 0]   address,
    input wire [31: 0]  write_data,
@@ -48,17 +48,17 @@ module ecdsa256_wrapper
    // Address Decoder
    //
    localparam ADDR_MSB_REGS = 1'b0;
-	localparam ADDR_MSB_CORE = 1'b1;
-	
-   wire [0:0] addr_msb = address[5];
-   wire [4:0] addr_lsb = address[4:0];
+   localparam ADDR_MSB_CORE = 1'b1;
+
+   wire [0:0] 	       addr_msb = address[5];
+   wire [4:0] 	       addr_lsb = address[4:0];
 
 
    //
    // Output Mux
    //
-   wire [31: 0] read_data_regs;
-   wire [31: 0] read_data_core;
+   wire [31: 0]        read_data_regs;
+   wire [31: 0]        read_data_core;
 
 
    //
@@ -70,12 +70,12 @@ module ecdsa256_wrapper
 
    localparam ADDR_CONTROL      = 5'h08;               // {next, init}
    localparam ADDR_STATUS       = 5'h09;               // {valid, ready}
-	localparam ADDR_DUMMY        = 5'h0F;               // don't care
+   localparam ADDR_DUMMY        = 5'h0F;               // don't care
 
-// localparam CONTROL_INIT_BIT  = 0; -- not used
+   // localparam CONTROL_INIT_BIT  = 0; -- not used
    localparam CONTROL_NEXT_BIT  = 1;
 
-// localparam STATUS_READY_BIT  = 0; -- hardcoded to always read 1
+   // localparam STATUS_READY_BIT  = 0; -- hardcoded to always read 1
    localparam STATUS_VALID_BIT  = 1;
 
    localparam CORE_NAME0        = 32'h65636473; // "ecds"
@@ -86,23 +86,23 @@ module ecdsa256_wrapper
    //
    // Registers
    //
-   reg        reg_control;
-	reg [31:0] reg_dummy;
+   reg 		       reg_control;
+   reg [31:0] 	       reg_dummy;
 
 
    //
    // Wires
    //
-   wire reg_status;
+   wire 	       reg_status;
 
 
    //
    // ECDSA256
    //
    ecdsa256 ecdsa256_inst
-	(
+     (
       .clk                      (clk),
-		.rst_n                    (rst_n),
+      .rst_n                    (reset_n),
 
       .next                     (reg_control),
       .valid                    (reg_status),
@@ -112,13 +112,13 @@ module ecdsa256_wrapper
       .bus_addr                 (addr_lsb),
       .bus_data_wr              (write_data),
       .bus_data_rd              (read_data_core)
-	);
+      );
 
 
    //
    // Read Latch
    //
-   reg [31: 0]         tmp_read_data;
+   reg [31: 0] 	       tmp_read_data;
 
 
    //
@@ -126,7 +126,7 @@ module ecdsa256_wrapper
    //
    always @(posedge clk)
      //
-     if (!rst_n) begin
+     if (!reset_n) begin
         //
         reg_control <= 1'b0;
         //
@@ -139,7 +139,7 @@ module ecdsa256_wrapper
            case (addr_lsb)
              //
              ADDR_CONTROL: reg_control <= write_data[1];
-				 ADDR_DUMMY:   reg_dummy   <= write_data[31:0];
+	     ADDR_DUMMY:   reg_dummy   <= write_data[31:0];
              //
            endcase
            //
@@ -154,7 +154,7 @@ module ecdsa256_wrapper
              ADDR_VERSION:      tmp_read_data <= CORE_VERSION;
              ADDR_CONTROL:      tmp_read_data <= {{30{1'b0}}, reg_control, 1'b0};
              ADDR_STATUS:       tmp_read_data <= {{30{1'b0}}, reg_status,  1'b1};
-				 ADDR_DUMMY:        tmp_read_data <= reg_dummy;
+	     ADDR_DUMMY:        tmp_read_data <= reg_dummy;
              //
              default:           tmp_read_data <= 32'h00000000;
              //

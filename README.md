@@ -2,7 +2,7 @@
 
 ## Core Description
 
-This core implements the scalar base point multiplier for ECDSA curve P-256. It can be used during generation of public keys, the core can also be used as part of the signing operation. 
+This core implements the scalar base point multiplier for ECDSA curve P-256. It can be used during generation of public keys, the core can also be used as part of the signing operation.
 
 ## API Specification
 
@@ -73,7 +73,7 @@ The "worker" unit can execute five basic operations:
  * modular addition
  * modular subtraction
  * modular multiplications
- 
+
 There are two primary microprograms, that the worker runs: curve point doubling and addition of curve point to the base point. Those microprograms use projective Jacobian coordinates, so one more microprogram is used to convert the product into affine coordinates with the help of modular inversion unit.
 
 Note, that the core is supplemented by a reference model written in C, that has extensive comments describing tricky corners of the underlying math.

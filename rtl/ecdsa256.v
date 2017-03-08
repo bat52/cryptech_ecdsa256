@@ -34,115 +34,115 @@
 
 module ecdsa256
   (
-   input  wire        clk,
-	input  wire        rst_n,
+   input wire 	      clk,
+   input wire 	      rst_n,
 
-   input  wire        next,
-   output wire        valid,
+   input wire 	      next,
+   output wire 	      valid,
 
-   input  wire        bus_cs,
-   input  wire        bus_we,
-   input  wire [ 4:0] bus_addr,
-   input  wire [31:0] bus_data_wr,
+   input wire 	      bus_cs,
+   input wire 	      bus_we,
+   input wire [ 4:0]  bus_addr,
+   input wire [31:0]  bus_data_wr,
    output wire [31:0] bus_data_rd
    );
 
 
-	//
-	// Memory Banks
-	//
-	localparam [1:0] BUS_ADDR_BANK_K = 2'b00;
-	localparam [1:0] BUS_ADDR_BANK_X = 2'b01;
-	localparam [1:0] BUS_ADDR_BANK_Y = 2'b10;
+   //
+   // Memory Banks
+   //
+   localparam [1:0] BUS_ADDR_BANK_K = 2'b00;
+   localparam [1:0] BUS_ADDR_BANK_X = 2'b01;
+   localparam [1:0] BUS_ADDR_BANK_Y = 2'b10;
 
-	wire [1:0] bus_addr_upper = bus_addr[4:3];
-	wire [2:0] bus_addr_lower = bus_addr[2:0];
-	
-	
+   wire [1:0] 	      bus_addr_upper = bus_addr[4:3];
+   wire [2:0] 	      bus_addr_lower = bus_addr[2:0];
+
+
    //
    // Memories
    //
-	
-   wire [31:0] user_rw_k_bram_out;
-   wire [31:0] user_ro_x_bram_out;
-   wire [31:0] user_ro_y_bram_out;
-	
-	wire [ 2:0] core_ro_k_bram_addr;
-	wire [ 2:0] core_rw_x_bram_addr;
-	wire [ 2:0] core_rw_y_bram_addr;
-	
-	wire        core_rw_x_bram_wren;
-	wire        core_rw_y_bram_wren;
-	
-	wire [31:0] core_ro_k_bram_dout;
-	wire [31:0] core_rw_x_bram_din;
-	wire [31:0] core_rw_y_bram_din;
 
-	
-	bram_1rw_1ro_readfirst #
-	(	.MEM_WIDTH(32), .MEM_ADDR_BITS(3)
+   wire [31:0] 	      user_rw_k_bram_out;
+   wire [31:0] 	      user_ro_x_bram_out;
+   wire [31:0] 	      user_ro_y_bram_out;
+
+   wire [ 2:0] 	      core_ro_k_bram_addr;
+   wire [ 2:0] 	      core_rw_x_bram_addr;
+   wire [ 2:0] 	      core_rw_y_bram_addr;
+
+   wire 	      core_rw_x_bram_wren;
+   wire 	      core_rw_y_bram_wren;
+
+   wire [31:0] 	      core_ro_k_bram_dout;
+   wire [31:0] 	      core_rw_x_bram_din;
+   wire [31:0] 	      core_rw_y_bram_din;
+
+
+   bram_1rw_1ro_readfirst #
+     (	.MEM_WIDTH(32), .MEM_ADDR_BITS(3)
 	)
-	bram_k
-	(	.clk(clk),
-		.a_addr(bus_addr_lower), .a_out(user_rw_k_bram_out), .a_wr(bus_cs && bus_we && (bus_addr_upper == BUS_ADDR_BANK_K)), .a_in(bus_data_wr), 
-		.b_addr(core_ro_k_bram_addr), .b_out(core_ro_k_bram_dout)
+   bram_k
+     (	.clk(clk),
+	.a_addr(bus_addr_lower), .a_out(user_rw_k_bram_out), .a_wr(bus_cs && bus_we && (bus_addr_upper == BUS_ADDR_BANK_K)), .a_in(bus_data_wr),
+	.b_addr(core_ro_k_bram_addr), .b_out(core_ro_k_bram_dout)
 	);
-	
-	bram_1rw_1ro_readfirst #
-	(	.MEM_WIDTH(32), .MEM_ADDR_BITS(3)
+
+   bram_1rw_1ro_readfirst #
+     (	.MEM_WIDTH(32), .MEM_ADDR_BITS(3)
 	)
-	bram_x
-	(	.clk(clk),
-		.a_addr(core_rw_x_bram_addr), .a_out(), .a_wr(core_rw_x_bram_wren), .a_in(core_rw_x_bram_din), 
-		.b_addr(bus_addr_lower),      .b_out(user_ro_x_bram_out)
+   bram_x
+     (	.clk(clk),
+	.a_addr(core_rw_x_bram_addr), .a_out(), .a_wr(core_rw_x_bram_wren), .a_in(core_rw_x_bram_din),
+	.b_addr(bus_addr_lower),      .b_out(user_ro_x_bram_out)
 	);
-	
-	bram_1rw_1ro_readfirst #
-	(	.MEM_WIDTH(32), .MEM_ADDR_BITS(3)
+
+   bram_1rw_1ro_readfirst #
+     (	.MEM_WIDTH(32), .MEM_ADDR_BITS(3)
 	)
-	bram_y
-	(	.clk(clk),
-		.a_addr(core_rw_y_bram_addr), .a_out(), .a_wr(core_rw_y_bram_wren), .a_in(core_rw_y_bram_din), 
-		.b_addr(bus_addr_lower),      .b_out(user_ro_y_bram_out)
+   bram_y
+     (	.clk(clk),
+	.a_addr(core_rw_y_bram_addr), .a_out(), .a_wr(core_rw_y_bram_wren), .a_in(core_rw_y_bram_din),
+	.b_addr(bus_addr_lower),      .b_out(user_ro_y_bram_out)
 	);
 
 
    //
    // Curve Base Point Multiplier
    //
-	reg  next_dly;
-	
-	always @(posedge clk) next_dly <= next;
-	
-	wire next_trig = next && !next_dly;
-	
-   curve_mul_256 base_point_multiplier_p256
-	(
-		.clk		(clk),
-		.rst_n	(rst_n),
-		
-		.ena		(next_trig),
-		.rdy		(valid),
-		
-		.k_addr	(core_ro_k_bram_addr),
-		.rx_addr	(core_rw_x_bram_addr),
-		.ry_addr	(core_rw_y_bram_addr),
-		
-		.rx_wren	(core_rw_x_bram_wren),
-		.ry_wren	(core_rw_y_bram_wren),
-		
-		.k_din	(core_ro_k_bram_dout),
-		.rx_dout	(core_rw_x_bram_din),
-		.ry_dout	(core_rw_y_bram_din)
-	);
+   reg		next_dly;
 
-	//
+   always @(posedge clk) next_dly <= next;
+
+   wire		next_trig = next && !next_dly;
+
+   curve_mul_256 base_point_multiplier_p256
+     (
+      .clk	(clk),
+      .rst_n	(rst_n),
+
+      .ena	(next_trig),
+      .rdy	(valid),
+
+      .k_addr	(core_ro_k_bram_addr),
+      .rx_addr	(core_rw_x_bram_addr),
+      .ry_addr	(core_rw_y_bram_addr),
+
+      .rx_wren	(core_rw_x_bram_wren),
+      .ry_wren	(core_rw_y_bram_wren),
+
+      .k_din	(core_ro_k_bram_dout),
+      .rx_dout	(core_rw_x_bram_din),
+      .ry_dout	(core_rw_y_bram_din)
+      );
+
+   //
    // Output Selector
    //
-   reg [1:0] bus_addr_upper_prev;
+   reg [1:0] 	      bus_addr_upper_prev;
    always @(posedge clk) bus_addr_upper_prev = bus_addr_upper;
 
-   reg [31: 0] bus_data_rd_mux;
+   reg [31: 0] 	      bus_data_rd_mux;
    assign bus_data_rd = bus_data_rd_mux;
 
    always @(*)

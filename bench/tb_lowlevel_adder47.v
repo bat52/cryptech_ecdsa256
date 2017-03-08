@@ -44,106 +44,106 @@
 
 module tb_lowlevel_adder47;
 
-		//
-		// Inputs
-		//
-	reg				clk;
-	reg	[46: 0]	a;	
-	reg	[46: 0]	b;
+   //
+   // Inputs
+   //
+   reg				clk;
+   reg [46: 0] 			a;
+   reg [46: 0] 			b;
 
-		//
-		// Outputs
-		//
-	wire	[46: 0]	s;	
+   //
+   // Outputs
+   //
+   wire [46: 0] 		s;
 
-		//
-		// Test Vectors {a, b}
-		//
-	wire	[93: 0]	vec_0		= {47'h2a87ca22be8b, 47'h05378eb1c71e};
-	wire	[93: 0]	vec_1		= {47'h7320ad746e1d, 47'h3b628ba79b98};
-	wire	[93: 0]	vec_2		= {47'h59f741e08254, 47'h2a385502f25d};
-	wire	[93: 0]	vec_3		= {47'h3f55296c3a54, 47'h5e3872760ab7};
-	wire	[93: 0]	vec_4		= {47'h3617de4a9626, 47'h2c6f5d9e98bf};
-	wire	[93: 0]	vec_5		= {47'h1292dc29f8f4, 47'h1dbd289a147c};
-	wire	[93: 0]	vec_6		= {47'h69da3113b5f0, 47'h38c00a60b1ce};
-	wire	[93: 0]	vec_7		= {47'h1d7e819d7a43, 47'h1d7c90ea0e5f};
-	
-		//
-		// UUT
-		//
-	adder47_wrapper uut
-	(
-		.clk		(clk),
-		.a			(a),
-		.b			(b),
-		.s			(s)
-	);
+   //
+   // Test Vectors {a, b}
+   //
+   wire [93: 0] 		vec_0		= {47'h2a87ca22be8b, 47'h05378eb1c71e};
+   wire [93: 0] 		vec_1		= {47'h7320ad746e1d, 47'h3b628ba79b98};
+   wire [93: 0] 		vec_2		= {47'h59f741e08254, 47'h2a385502f25d};
+   wire [93: 0] 		vec_3		= {47'h3f55296c3a54, 47'h5e3872760ab7};
+   wire [93: 0] 		vec_4		= {47'h3617de4a9626, 47'h2c6f5d9e98bf};
+   wire [93: 0] 		vec_5		= {47'h1292dc29f8f4, 47'h1dbd289a147c};
+   wire [93: 0] 		vec_6		= {47'h69da3113b5f0, 47'h38c00a60b1ce};
+   wire [93: 0] 		vec_7		= {47'h1d7e819d7a43, 47'h1d7c90ea0e5f};
+
+   //
+   // UUT
+   //
+   adder47_wrapper uut
+     (
+      .clk		(clk),
+      .a		(a),
+      .b		(b),
+      .s		(s)
+      );
 
 
-		//
-		// Testbench Routine
-		//
-	reg ok = 1;
-	initial begin
-		//
-		clk = 0;
-		//
-		#100;
-		//
-		test_adder47(vec_0);
-		test_adder47(vec_1);
-		test_adder47(vec_2);
-		test_adder47(vec_3);
-		test_adder47(vec_4);
-		test_adder47(vec_5);
-		test_adder47(vec_6);
-		test_adder47(vec_7);
-		//
-		if (ok)	$display("tb_lowlevel_adder47: SUCCESS");
-		else		$display("tb_lowlevel_adder47: FAILURE");
-		//
-		$finish;
-		//
-	end
-      
-		
-		//
-		// Test Routine
-		//
-	reg	[46: 0]	ss;		// reference value of sum
-	reg				cc;		// reference value of carry
-	reg				ss_ok;	// result matches reference value
-	
-	task test_adder47;
+   //
+   // Testbench Routine
+   //
+   reg 			ok = 1;
+   initial begin
+      //
+      clk = 0;
+      //
+      #100;
+      //
+      test_adder47(vec_0);
+      test_adder47(vec_1);
+      test_adder47(vec_2);
+      test_adder47(vec_3);
+      test_adder47(vec_4);
+      test_adder47(vec_5);
+      test_adder47(vec_6);
+      test_adder47(vec_7);
+      //
+      if (ok)	$display("tb_lowlevel_adder47: SUCCESS");
+      else	$display("tb_lowlevel_adder47: FAILURE");
+      //
+      $finish;
+      //
+   end
 
-		input	[93: 0] vec;
 
-		begin
-				
-				/* break down test vector */
-			a		= vec[93:47];
-			b		= vec[46: 0];
-			
-				/* calculate reference values */
-			ss = a + b;
-			
-				/* send one clock tick */
-			#10 clk = 1;
-			#10 clk = 0;
-			
-				/* check outputs */
-			ss_ok = (s == ss);
+   //
+   // Test Routine
+   //
+   reg	[46: 0]	ss;		// reference value of sum
+   reg 		cc;		// reference value of carry
+   reg 		ss_ok;	// result matches reference value
 
-				/* display results */
-			$display("test_adder47(): %s", ok ? "OK" : "ERROR");
-			
-				/* update global flag */
-			ok = ok && ss_ok;
+   task test_adder47;
 
-		end
+      input	[93: 0] vec;
 
-	endtask
-		
+      begin
+
+	 /* break down test vector */
+	 a		= vec[93:47];
+	 b		= vec[46: 0];
+
+	 /* calculate reference values */
+	 ss = a + b;
+
+	 /* send one clock tick */
+	 #10 clk = 1;
+	 #10 clk = 0;
+
+	 /* check outputs */
+	 ss_ok = (s == ss);
+
+	 /* display results */
+	 $display("test_adder47(): %s", ok ? "OK" : "ERROR");
+
+	 /* update global flag */
+	 ok = ok && ss_ok;
+
+      end
+
+   endtask
+
 endmodule
 
 //------------------------------------------------------------------------------
