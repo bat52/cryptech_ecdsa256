@@ -1,5 +1,5 @@
 //
-// simple driver to test "ecdsa384" core in hardware
+// simple driver to test "ecdsa256" core in hardware
 //
 
 //
@@ -31,7 +31,7 @@
 // curve selection
 #define USE_CURVE			1
 
-#include "ecdsa_model.h"
+#include "../../../user/shatov/ecdsa_fpga_model/ecdsa_model.h"
 
 #define BUF_NUM_WORDS		(OPERAND_WIDTH / (sizeof(uint32_t) << 3))	// 8
 
@@ -50,8 +50,15 @@ static const uint32_t p256_i[BUF_NUM_WORDS]  = ECDSA_ONE;
 static const uint32_t p256_gx[BUF_NUM_WORDS] = ECDSA_G_X;
 static const uint32_t p256_gy[BUF_NUM_WORDS] = ECDSA_G_Y;
 
+static const uint32_t p256_hx[BUF_NUM_WORDS] = ECDSA_H_X;
+static const uint32_t p256_hy[BUF_NUM_WORDS] = ECDSA_H_Y;
+
 static const uint32_t p256_z[BUF_NUM_WORDS]  = ECDSA_ZERO;
 static const uint32_t p256_n[BUF_NUM_WORDS]  = ECDSA_N;
+
+static uint32_t p256_2[BUF_NUM_WORDS];	// 2
+static uint32_t p256_n1[BUF_NUM_WORDS];	// n + 1
+static uint32_t p256_n2[BUF_NUM_WORDS];	// n + 2
 
 //
 // prototypes
@@ -88,20 +95,54 @@ int main()
     while (1);
   }
 
+	// prepare more numbers
+	size_t w;
+	for (w=0; w<BUF_NUM_WORDS; w++)
+	{	p256_2[w]  = p256_z[w];	// p256_2 = p256_z = 0
+		p256_n1[w] = p256_n[w];	// p256_n1 = p256_n = N
+		p256_n2[w] = p256_n[w];	// p256_n2 = p256_n = N
+	}
+	
+	p256_2[BUF_NUM_WORDS-1]  += 2;	// p256_2 = 2
+	p256_n1[BUF_NUM_WORDS-1] += 1;	// p256_n1 = N + 1
+	p256_n2[BUF_NUM_WORDS-1] += 2;	// p256_n2 = N + 2
+	
+	
+	
   // repeat forever
   while (1)
     {
       ok = 1;
-      ok = ok && test_p256_multiplier(p256_d, p256_qx, p256_qy);
-      ok = ok && test_p256_multiplier(p256_k, p256_rx, p256_ry);
-      ok = ok && test_p256_multiplier(p256_z, p256_z,  p256_z);
-      ok = ok && test_p256_multiplier(p256_i, p256_gx, p256_gy);
-      ok = ok && test_p256_multiplier(p256_n, p256_z,  p256_z);
+			
+      ok = ok && test_p256_multiplier(p256_d, p256_qx, p256_qy);	/* Q = d * G */
+      ok = ok && test_p256_multiplier(p256_k, p256_rx, p256_ry);	/* R = k * G */
+			
+      ok = ok && test_p256_multiplier(p256_z, p256_z,  p256_z);		/* O = 0 * G */
+      ok = ok && test_p256_multiplier(p256_i, p256_gx, p256_gy);	/* G = 1 * G */
+			
+      ok = ok && test_p256_multiplier(p256_n, p256_z,  p256_z);		/* O = n * G */
 
+			ok = ok && test_p256_multiplier(p256_n1, p256_gx, p256_gy);	/* G = (n + 1) * G */
+			
+			//
+			// The following two vectors test the virtually never taken path in the curve point
+			// addition routine when both input points are the same. During the first test (2 * G)
+			// the double of the base point is computed at the second doubling step of the multiplication
+			// algorithm, which does not require any special handling. During the second test the
+			// precomputed double of the base point (stored in internal read-only memory) is returned,
+			// because after doubling of G * ((n + 1) / 2) we get G * (n + 1) = G. The adder then has to
+			// compute G + G for which the formulae don't work, and special handling is required. The two
+			// test vectors verify that the hardcoded double of the base point matches the one computed
+			// on the fly. Note that in practice one should never be multiplying by anything larger than (n-1),
+			// because both the secret key and the per-message (random) number must be from [1, n-1].
+			//
+			ok = ok && test_p256_multiplier(p256_2, p256_hx, p256_hy);	/* H = 2 * G */
+			ok = ok && test_p256_multiplier(p256_n2, p256_hx, p256_hy);	/* H = (n + 2) * G */			
+			
       if (!ok) {
-	led_off(LED_GREEN);
-	led_on(LED_RED);
-      }
+				led_off(LED_GREEN);
+				led_on(LED_RED);
+			}
 
       toggle_yellow_led();
     }
