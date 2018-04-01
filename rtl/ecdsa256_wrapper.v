@@ -138,8 +138,8 @@ module ecdsa256_wrapper
            //
            case (addr_lsb)
              //
-             ADDR_CONTROL: reg_control <= write_data[1];
-	     ADDR_DUMMY:   reg_dummy   <= write_data[31:0];
+             ADDR_CONTROL: reg_control <= write_data[CONTROL_NEXT_BIT];
+	     ADDR_DUMMY:   reg_dummy   <= write_data;
              //
            endcase
            //
@@ -169,7 +169,7 @@ module ecdsa256_wrapper
    // Register / Core Memory Selector
    //
    reg addr_msb_last;
-   always @(posedge clk) addr_msb_last = addr_msb;
+   always @(posedge clk) addr_msb_last <= addr_msb;
 
    assign read_data = (addr_msb_last == ADDR_MSB_REGS) ? tmp_read_data : read_data_core;
 
