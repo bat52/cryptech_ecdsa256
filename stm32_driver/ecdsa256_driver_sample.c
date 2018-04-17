@@ -122,22 +122,22 @@ int main()
 			
       ok = ok && test_p256_multiplier(p256_n, p256_z,  p256_z);		/* O = n * G */
 
-			ok = ok && test_p256_multiplier(p256_n1, p256_gx, p256_gy);	/* G = (n + 1) * G */
+      ok = ok && test_p256_multiplier(p256_n1, p256_gx, p256_gy);	/* G = (n + 1) * G */
 			
-			//
-			// The following two vectors test the virtually never taken path in the curve point
-			// addition routine when both input points are the same. During the first test (2 * G)
-			// the double of the base point is computed at the second doubling step of the multiplication
-			// algorithm, which does not require any special handling. During the second test the
-			// precomputed double of the base point (stored in internal read-only memory) is returned,
-			// because after doubling of G * ((n + 1) / 2) we get G * (n + 1) = G. The adder then has to
-			// compute G + G for which the formulae don't work, and special handling is required. The two
-			// test vectors verify that the hardcoded double of the base point matches the one computed
-			// on the fly. Note that in practice one should never be multiplying by anything larger than (n-1),
-			// because both the secret key and the per-message (random) number must be from [1, n-1].
-			//
-			ok = ok && test_p256_multiplier(p256_2, p256_hx, p256_hy);	/* H = 2 * G */
-			ok = ok && test_p256_multiplier(p256_n2, p256_hx, p256_hy);	/* H = (n + 2) * G */			
+	//
+	// The following two vectors test the virtually never taken path in the curve point
+	// addition routine when both input points are the same. During the first test (2 * G)
+	// the double of the base point is computed at the second doubling step of the multiplication
+	// algorithm, which does not require any special handling. During the second test the
+	// precomputed double of the base point (stored in internal read-only memory) is returned,
+	// because after doubling of G * ((n + 1) / 2) we get G * (n + 1) = G. The adder then has to
+	// compute G + G for which the formulae don't work, and special handling is required. The two
+	// test vectors verify that the hardcoded double of the base point matches the one computed
+	// on the fly. Note that in practice one should never be multiplying by anything larger than (n-1),
+	// because both the secret key and the per-message (random) number must be from [1, n-1].
+	//
+	ok = ok && test_p256_multiplier(p256_2, p256_hx, p256_hy);	/* H = 2 * G */
+	ok = ok && test_p256_multiplier(p256_n2, p256_hx, p256_hy);	/* H = (n + 2) * G */			
 			
       if (!ok) {
 				led_off(LED_GREEN);
