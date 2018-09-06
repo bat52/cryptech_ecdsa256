@@ -6,7 +6,7 @@
 //
 // Authors: Pavel Shatov
 //
-// Copyright (c) 2016, NORDUnet A/S
+// Copyright (c) 2016, 2018 NORDUnet A/S
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -424,11 +424,30 @@ module curve_dbl_add_256
    //
    // uOP Trigger Logic
    //
-   reg 						      uop_trig;
-   always @(posedge clk or negedge rst_n)
-     //
-     if (rst_n == 1'b0)	uop_trig <= 1'b0;
-     else						uop_trig <= (fsm_state == FSM_STATE_FETCH) ? 1'b1 : 1'b0;
+   (* EQUIVALENT_REGISTER_REMOVAL="NO" *) reg uop_trig_fsm;
+   (* EQUIVALENT_REGISTER_REMOVAL="NO" *) reg uop_trig_cmp;
+   (* EQUIVALENT_REGISTER_REMOVAL="NO" *) reg uop_trig_mov;
+   (* EQUIVALENT_REGISTER_REMOVAL="NO" *) reg uop_trig_add;
+   (* EQUIVALENT_REGISTER_REMOVAL="NO" *) reg uop_trig_sub;
+   (* EQUIVALENT_REGISTER_REMOVAL="NO" *) reg uop_trig_mul;
+   
+    always @(posedge clk or negedge rst_n)
+        //
+        if (rst_n == 1'b0) begin
+            uop_trig_fsm <= 1'b0;
+            uop_trig_cmp <= 1'b0;
+            uop_trig_mov <= 1'b0;
+            uop_trig_add <= 1'b0;
+            uop_trig_sub <= 1'b0;
+            uop_trig_mul <= 1'b0;
+        end else begin
+            uop_trig_fsm <= (fsm_state == FSM_STATE_FETCH) ? 1'b1 : 1'b0;
+            uop_trig_cmp <= (fsm_state == FSM_STATE_FETCH) ? 1'b1 : 1'b0;
+            uop_trig_mov <= (fsm_state == FSM_STATE_FETCH) ? 1'b1 : 1'b0;
+            uop_trig_add <= (fsm_state == FSM_STATE_FETCH) ? 1'b1 : 1'b0;
+            uop_trig_sub <= (fsm_state == FSM_STATE_FETCH) ? 1'b1 : 1'b0;
+            uop_trig_mul <= (fsm_state == FSM_STATE_FETCH) ? 1'b1 : 1'b0;
+        end
 
 
    //
@@ -442,20 +461,20 @@ module curve_dbl_add_256
    wire [ 1: 0] 				      fsm_state_next	= (uop_opcode == OPCODE_RDY) ? FSM_STATE_STALL : FSM_STATE_FETCH;
 
 
-   //
-   // FSM Transition Logic
-   //
-   reg 						      uop_done;
+    //
+    // FSM Transition Logic
+    //
+    reg 						      uop_done;
 
-   always @(posedge clk or negedge rst_n)
-     //
-     if (rst_n == 1'b0)		fsm_state <= FSM_STATE_STALL;
-     else case (fsm_state)
-	    FSM_STATE_STALL:		fsm_state <= ena ? FSM_STATE_FETCH : FSM_STATE_STALL;
-	    FSM_STATE_FETCH:		fsm_state <= FSM_STATE_EXECUTE;
-	    FSM_STATE_EXECUTE:	fsm_state <= (!uop_trig && uop_done) ? fsm_state_next : FSM_STATE_EXECUTE;
-	    default:					fsm_state <= FSM_STATE_STALL;
-	  endcase
+    always @(posedge clk or negedge rst_n)
+        //
+        if (rst_n == 1'b0)      fsm_state <= FSM_STATE_STALL;
+        else case (fsm_state)
+            FSM_STATE_STALL:    fsm_state <= ena ? FSM_STATE_FETCH : FSM_STATE_STALL;
+            FSM_STATE_FETCH:    fsm_state <= FSM_STATE_EXECUTE;
+            FSM_STATE_EXECUTE:  fsm_state <= (!uop_trig_fsm && uop_done) ? fsm_state_next : FSM_STATE_EXECUTE;
+            default:            fsm_state <= FSM_STATE_STALL;
+        endcase
 
 
    //
@@ -466,7 +485,7 @@ module curve_dbl_add_256
      if (fsm_state == FSM_STATE_STALL)
        uop_addr <= 5'd0;
      else if (fsm_state == FSM_STATE_EXECUTE)
-       if (!uop_trig && uop_done)
+       if (!uop_trig_fsm && uop_done)
 	 uop_addr <= (uop_opcode == OPCODE_RDY) ? 5'd0 : uop_addr + 1'b1;
 
 
@@ -486,14 +505,14 @@ module curve_dbl_add_256
    endcase
 
 
-   //
-   // Helper Modules Enable Logic
-   //
-   assign mw_cmp_ena		= uop_opcode[0] & uop_trig;
-   assign mw_mov_ena		= uop_opcode[1] & uop_trig;
-   assign mod_add_ena	= uop_opcode[2] & uop_trig;
-   assign mod_sub_ena	= uop_opcode[3] & uop_trig;
-   assign mod_mul_ena	= uop_opcode[4] & uop_trig;
+    //
+    // Helper Modules Enable Logic
+    //
+    assign mw_cmp_ena    = uop_opcode[0] & uop_trig_cmp;
+    assign mw_mov_ena    = uop_opcode[1] & uop_trig_mov;
+    assign mod_add_ena   = uop_opcode[2] & uop_trig_add;
+    assign mod_sub_ena   = uop_opcode[3] & uop_trig_sub;
+    assign mod_mul_ena   = uop_opcode[4] & uop_trig_mul;
 
 
    //
@@ -823,47 +842,47 @@ module curve_dbl_add_256
    assign bram_t4_wr_data = uop_dst_value;
 
 
-   //
-   // Latch Comparison Flags
-   //
-   always @(posedge clk)
-     //
-     if (	(fsm_state  == FSM_STATE_EXECUTE) &&
-		(uop_opcode == OPCODE_CMP)        &&
-		(uop_done && !uop_trig) ) begin
+        //
+        // Latch Comparison Flags
+        //
+    always @(posedge clk)
+    //
+        if (	(fsm_state  == FSM_STATE_EXECUTE) &&
+                (uop_opcode == OPCODE_CMP)        &&
+                (uop_done && !uop_trig_cmp) ) begin
 
-	if ( (uop_src_a == UOP_SRC_PZ) && (uop_src_b == UOP_SRC_ZERO) )
-	  flag_pz_is_zero <= !mw_cmp_out_l && mw_cmp_out_e && !mw_cmp_out_g;
+        if ( (uop_src_a == UOP_SRC_PZ) && (uop_src_b == UOP_SRC_ZERO) )
+            flag_pz_is_zero <= !mw_cmp_out_l && mw_cmp_out_e && !mw_cmp_out_g;
 
-	if ( (uop_src_a == UOP_SRC_T1) && (uop_src_b == UOP_SRC_ZERO) )
-	  flag_t1_is_zero <= !mw_cmp_out_l && mw_cmp_out_e && !mw_cmp_out_g;
+        if ( (uop_src_a == UOP_SRC_T1) && (uop_src_b == UOP_SRC_ZERO) )
+            flag_t1_is_zero <= !mw_cmp_out_l && mw_cmp_out_e && !mw_cmp_out_g;
 
-	if ( (uop_src_a == UOP_SRC_T2) && (uop_src_b == UOP_SRC_ZERO) )
-	  flag_t2_is_zero <= !mw_cmp_out_l && mw_cmp_out_e && !mw_cmp_out_g;
+        if ( (uop_src_a == UOP_SRC_T2) && (uop_src_b == UOP_SRC_ZERO) )
+            flag_t2_is_zero <= !mw_cmp_out_l && mw_cmp_out_e && !mw_cmp_out_g;
 
-     end
+    end
 
 
-   //
-   // Ready Flag Logic
-   //
-   reg rdy_reg = 1'b1;
-   assign rdy = rdy_reg;
+    //
+    // Ready Flag Logic
+    //
+    reg rdy_reg = 1'b1;
+    assign rdy = rdy_reg;
 
-   always @(posedge clk or negedge rst_n)
-     //
-     if (rst_n == 1'b0) rdy_reg <= 1'b1;
-     else begin
+    always @(posedge clk or negedge rst_n)
+        //
+        if (rst_n == 1'b0) rdy_reg <= 1'b1;
+        else begin
 
-	/* clear flag */
-	if (fsm_state == FSM_STATE_STALL)
-	  if (ena) rdy_reg <= 1'b0;
+            /* clear flag */
+            if (fsm_state == FSM_STATE_STALL)
+                if (ena) rdy_reg <= 1'b0;
 
-	/* set flag */
-	if ((fsm_state == FSM_STATE_EXECUTE) && !uop_trig && uop_done)
-	  if (uop_opcode == OPCODE_RDY) rdy_reg <= 1'b1;
+            /* set flag */
+            if ((fsm_state == FSM_STATE_EXECUTE) && !uop_trig_fsm && uop_done)
+                if (uop_opcode == OPCODE_RDY) rdy_reg <= 1'b1;
 
-     end
+        end
 
 
 endmodule
