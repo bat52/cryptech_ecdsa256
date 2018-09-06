@@ -230,23 +230,22 @@ module curve_mul_256
    wire [19: 0] 		     op_rom_conv_data;
    reg [19: 0] 			     op_rom_mux_data;
 
-   (* RAM_STYLE="BLOCK" *)
+   (* EQUIVALENT_REGISTER_REMOVAL="NO" *)
    uop_init_rom op_rom_init
      (
       .clk	(clk),
       .addr	(op_rom_addr),
       .data	(op_rom_init_data)
       );
-
-   (* RAM_STYLE="BLOCK" *)
+   (* EQUIVALENT_REGISTER_REMOVAL="NO" *)
    uop_dbl_rom op_rom_dbl
      (
       .clk	(clk),
       .addr	(op_rom_addr),
       .data	(op_rom_dbl_data)
       );
-
-   (* RAM_STYLE="BLOCK" *)
+      
+   (* EQUIVALENT_REGISTER_REMOVAL="NO" *)
    uop_add_rom op_rom_add
      (
       .clk	(clk),
@@ -254,7 +253,7 @@ module curve_mul_256
       .data	(op_rom_add_data)
       );
 
-   (* RAM_STYLE="BLOCK" *)
+   (* EQUIVALENT_REGISTER_REMOVAL="NO" *)
    uop_conv_rom op_rom_conv
      (
       .clk	(clk),
