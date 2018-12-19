@@ -31,34 +31,44 @@
 // curve selection
 #define USE_CURVE			1
 
-#include "../../../user/shatov/ecdsa_fpga_model/ecdsa_model.h"
+#include "ecdsa_test_vector_nsa.h"
+#include "ecdsa_test_vector_randomized.h"
 
-#define BUF_NUM_WORDS		(OPERAND_WIDTH / (sizeof(uint32_t) << 3))	// 8
+#define bool uint32_t // very dirty hack, but works in this particular case
+#include "ecdsa_fpga_lowlevel.h"
+#include "ecdsa_fpga_multiword.h"
+#include "ecdsa_fpga_curve.h"
+#undef bool
+
+#define BUF_NUM_WORDS FPGA_OPERAND_NUM_WORDS
 
 //
 // test vectors
 //
-static const uint32_t p256_d[BUF_NUM_WORDS]  = ECDSA_D;
-static const uint32_t p256_qx[BUF_NUM_WORDS] = ECDSA_Q_X;
-static const uint32_t p256_qy[BUF_NUM_WORDS] = ECDSA_Q_Y;
+static const uint32_t p256_d_nsa[BUF_NUM_WORDS]  = ECDSA_P256_D_NSA_INIT;
+static const uint32_t p256_qx_nsa[BUF_NUM_WORDS] = ECDSA_P256_QX_NSA_INIT;
+static const uint32_t p256_qy_nsa[BUF_NUM_WORDS] = ECDSA_P256_QY_NSA_INIT;
 
-static const uint32_t p256_k[BUF_NUM_WORDS]  = ECDSA_K;
-static const uint32_t p256_rx[BUF_NUM_WORDS] = ECDSA_R_X;
-static const uint32_t p256_ry[BUF_NUM_WORDS] = ECDSA_R_Y;
+static const uint32_t p256_k_nsa[BUF_NUM_WORDS]  = ECDSA_P256_K_NSA_INIT;
+static const uint32_t p256_rx_nsa[BUF_NUM_WORDS] = ECDSA_P256_RX_NSA_INIT;
+static const uint32_t p256_ry_nsa[BUF_NUM_WORDS] = ECDSA_P256_RY_NSA_INIT;
 
-static const uint32_t p256_i[BUF_NUM_WORDS]  = ECDSA_ONE;
-static const uint32_t p256_gx[BUF_NUM_WORDS] = ECDSA_G_X;
-static const uint32_t p256_gy[BUF_NUM_WORDS] = ECDSA_G_Y;
+static const uint32_t p256_d_random[BUF_NUM_WORDS]  = ECDSA_P256_D_RANDOM_INIT;
+static const uint32_t p256_qx_random[BUF_NUM_WORDS] = ECDSA_P256_QX_RANDOM_INIT;
+static const uint32_t p256_qy_random[BUF_NUM_WORDS] = ECDSA_P256_QY_RANDOM_INIT;
 
-static const uint32_t p256_hx[BUF_NUM_WORDS] = ECDSA_H_X;
-static const uint32_t p256_hy[BUF_NUM_WORDS] = ECDSA_H_Y;
 
-static const uint32_t p256_z[BUF_NUM_WORDS]  = ECDSA_ZERO;
-static const uint32_t p256_n[BUF_NUM_WORDS]  = ECDSA_N;
+static const uint32_t p256_gx[BUF_NUM_WORDS] = ECDSA_P256_GX_INIT;
+static const uint32_t p256_gy[BUF_NUM_WORDS] = ECDSA_P256_GY_INIT;
+static const uint32_t p256_hx[BUF_NUM_WORDS] = ECDSA_P256_HX_INIT;
+static const uint32_t p256_hy[BUF_NUM_WORDS] = ECDSA_P256_HY_INIT;
+static const uint32_t p256_n[BUF_NUM_WORDS]  = ECDSA_P256_N_INIT;
 
-static uint32_t p256_2[BUF_NUM_WORDS];	// 2
-static uint32_t p256_n1[BUF_NUM_WORDS];	// n + 1
-static uint32_t p256_n2[BUF_NUM_WORDS];	// n + 2
+static uint32_t p256_zero[BUF_NUM_WORDS];
+static uint32_t p256_two [BUF_NUM_WORDS];
+static uint32_t p256_n1  [BUF_NUM_WORDS];
+static uint32_t p256_n2  [BUF_NUM_WORDS];
+
 
 //
 // prototypes
@@ -84,9 +94,11 @@ int main()
 
   uint32_t core_name0;
   uint32_t core_name1;
+	uint32_t core_version;
 
-  fmc_read_32(CORE_ADDR_NAME0, &core_name0);
-  fmc_read_32(CORE_ADDR_NAME1, &core_name1);
+  fmc_read_32(CORE_ADDR_NAME0,   &core_name0);
+  fmc_read_32(CORE_ADDR_NAME1,   &core_name1);
+	fmc_read_32(CORE_ADDR_VERSION, &core_version);
 
   // "ecds", "a256"
   if ((core_name0 != 0x65636473) || (core_name1 != 0x61323536)) {
@@ -98,15 +110,15 @@ int main()
 	// prepare more numbers
 	size_t w;
 	for (w=0; w<BUF_NUM_WORDS; w++)
-	{	p256_2[w]  = p256_z[w];	// p256_2 = p256_z = 0
-		p256_n1[w] = p256_n[w];	// p256_n1 = p256_n = N
-		p256_n2[w] = p256_n[w];	// p256_n2 = p256_n = N
+	{	p256_zero[w] = 0;
+		p256_two [w] = 0;
+		p256_n1  [w] = p256_n   [w];
+		p256_n2  [w] = p256_n   [w];
 	}
 	
-	p256_2[BUF_NUM_WORDS-1]  += 2;	// p256_2 = 2
-	p256_n1[BUF_NUM_WORDS-1] += 1;	// p256_n1 = N + 1
-	p256_n2[BUF_NUM_WORDS-1] += 2;	// p256_n2 = N + 2
-	
+	p256_two[BUF_NUM_WORDS-1] += 2;
+	p256_n1 [BUF_NUM_WORDS-1] += 1;
+	p256_n2 [BUF_NUM_WORDS-1] += 2;
 	
 	
   // repeat forever
@@ -114,15 +126,12 @@ int main()
     {
       ok = 1;
 			
-      ok = ok && test_p256_multiplier(p256_d, p256_qx, p256_qy);	/* Q = d * G */
-      ok = ok && test_p256_multiplier(p256_k, p256_rx, p256_ry);	/* R = k * G */
+      ok = ok && test_p256_multiplier(p256_d_nsa,    p256_qx_nsa,    p256_qy_nsa);	  /* Q = d * G */
+      ok = ok && test_p256_multiplier(p256_k_nsa,    p256_rx_nsa,    p256_ry_nsa);	  /* R = k * G */
+			ok = ok && test_p256_multiplier(p256_d_random, p256_qx_random, p256_qy_random);	/* Q = d * G */
 			
-      ok = ok && test_p256_multiplier(p256_z, p256_z,  p256_z);		/* O = 0 * G */
-      ok = ok && test_p256_multiplier(p256_i, p256_gx, p256_gy);	/* G = 1 * G */
-			
-      ok = ok && test_p256_multiplier(p256_n, p256_z,  p256_z);		/* O = n * G */
-
-      ok = ok && test_p256_multiplier(p256_n1, p256_gx, p256_gy);	/* G = (n + 1) * G */
+      ok = ok && test_p256_multiplier(p256_n,   p256_zero, p256_zero); /* O = n * G */
+      ok = ok && test_p256_multiplier(p256_n1,  p256_gx,   p256_gy);	 /* G = (n + 1) * G */
 			
 	//
 	// The following two vectors test the virtually never taken path in the curve point
@@ -136,8 +145,9 @@ int main()
 	// on the fly. Note that in practice one should never be multiplying by anything larger than (n-1),
 	// because both the secret key and the per-message (random) number must be from [1, n-1].
 	//
-	ok = ok && test_p256_multiplier(p256_2, p256_hx, p256_hy);	/* H = 2 * G */
-	ok = ok && test_p256_multiplier(p256_n2, p256_hx, p256_hy);	/* H = (n + 2) * G */			
+			ok = ok && test_p256_multiplier(p256_two, p256_hx,   p256_hy);	 /* H = 2 * G */
+      ok = ok && test_p256_multiplier(p256_n2,  p256_hx,   p256_hy);	 /* H = (n + 2) * G */
+
 			
       if (!ok) {
 				led_off(LED_GREEN);
@@ -163,14 +173,14 @@ int test_p256_multiplier(const uint32_t *k, const uint32_t *px, const uint32_t *
   // fill k
   for (i=0; i<BUF_NUM_WORDS; i++) {
     k_word = k[i];
-    fmc_write_32(CORE_ADDR_BUF_K + ((BUF_NUM_WORDS - (i + 1)) * sizeof(uint32_t)), &k_word);
+    fmc_write_32(CORE_ADDR_BUF_K + ((BUF_NUM_WORDS - (i + 1)) * sizeof(uint32_t)), k_word);
   }
 
   // clear 'next' control bit, then set 'next' control bit again to trigger new operation
   reg_control = 0;
-  fmc_write_32(CORE_ADDR_CONTROL, &reg_control);
+  fmc_write_32(CORE_ADDR_CONTROL, reg_control);
   reg_control = CORE_CONTROL_BIT_NEXT;
-  fmc_write_32(CORE_ADDR_CONTROL, &reg_control);
+  fmc_write_32(CORE_ADDR_CONTROL, reg_control);
 
   // wait for 'ready' status bit to be set
   num_cyc = 0;
@@ -204,6 +214,16 @@ void toggle_yellow_led(void)
 
   if (led_state) led_on(LED_YELLOW);
   else           led_off(LED_YELLOW);
+}
+
+
+//
+// systick
+//
+void SysTick_Handler(void)
+{
+    HAL_IncTick();
+    HAL_SYSTICK_IRQHandler();
 }
 
 
