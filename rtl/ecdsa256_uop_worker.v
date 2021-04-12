@@ -42,8 +42,7 @@ module ecdsa256_uop_worker
     ena, rdy,
     uop_offset,
     output_now,
-    flagz_sz, flagz_rz,
-    flagz_e,  flagz_f,
+    flagz_r0z, flagz_r1z,
     xy_addr, xy_dout, x_wren, y_wren
 );
 
@@ -67,10 +66,8 @@ module ecdsa256_uop_worker
     
     input   output_now;     // produce output    
 
-    output  flagz_sz;   // SZ is zero
-    output  flagz_rz;   // RZ is zero
-    output  flagz_e;    // E is zero
-    output  flagz_f;    // F is zero
+    output  flagz_r0z;   // R0Z is zero
+    output  flagz_r1z;   // R1Z is zero
 
     output  [ 2: 0] xy_addr;
     output  [31: 0] xy_dout;
@@ -320,15 +317,11 @@ module ecdsa256_uop_worker
     //
     // Comparison Flags
     //
-    reg flagz_sz_reg;
-    reg flagz_rz_reg;
-    reg flagz_e_reg;
-    reg flagz_f_reg;
+    reg flagz_r0z_reg;
+    reg flagz_r1z_reg;
     
-    assign flagz_sz = flagz_sz_reg; 
-    assign flagz_rz = flagz_rz_reg;
-    assign flagz_e  = flagz_e_reg;
-    assign flagz_f  = flagz_f_reg;
+    assign flagz_r0z = flagz_r0z_reg; 
+    assign flagz_r1z = flagz_r1z_reg;
     
     reg mw_comp_rdy_dly = 1'b1;
     
@@ -339,12 +332,9 @@ module ecdsa256_uop_worker
         if (mw_comp_rdy && !mw_comp_rdy_dly)
             //
             case (uop_data_operand_src1)
-                UOP_OPERAND_CYCLE_SZ: flagz_sz_reg <= mw_comp_cmp_e;
-                UOP_OPERAND_CYCLE_RZ: flagz_rz_reg <= mw_comp_cmp_e;
-                UOP_OPERAND_CYCLE_E:  flagz_e_reg  <= mw_comp_cmp_e;
-                UOP_OPERAND_CYCLE_F:  flagz_f_reg  <= mw_comp_cmp_e;
+                UOP_OPERAND_CYCLE_R0Z: flagz_r0z_reg <= mw_comp_cmp_e;
+                UOP_OPERAND_CYCLE_R1Z: flagz_r1z_reg <= mw_comp_cmp_e;
             endcase
-            
     
     
     //
@@ -575,7 +565,7 @@ module ecdsa256_uop_worker
         
             if (ena)
                 xy_phase <= 1'b0;
-            else if (!mw_mover_ena && mw_mover_rdy && (fsm_state == FSM_STATE_BUSY))
+            else if (!mod_mul_ena && mod_mul_rdy && (fsm_state == FSM_STATE_BUSY))
                 xy_phase <= 1'b1;
         
         end 
@@ -583,18 +573,19 @@ module ecdsa256_uop_worker
 
     always @(posedge clk)
         //
-        if (output_now && mw_mover_y_wren) xy_addr_reg <= mw_mover_y_addr;
-        else                               xy_addr_reg <= 3'b000;
+        if (output_now && mod_mul_p_wren) xy_addr_reg <= mod_mul_p_addr;
+        else                              xy_addr_reg <= 3'b000;
         
     always @(posedge clk)
         //
-        if (output_now && mw_mover_y_wren) xy_dout_reg <= mw_mover_y_dout;
-        else                               xy_dout_reg <= 32'h00000000;
+        if (output_now && mod_mul_p_wren) xy_dout_reg <= mod_mul_p_dout;
+        else                              xy_dout_reg <= 32'h00000000;
         
     always @(posedge clk)
             //
-            if (output_now && mw_mover_y_wren) {y_wren_reg, x_wren_reg} <= {xy_phase, ~xy_phase};
-            else                               {y_wren_reg, x_wren_reg} <= 2'b00;        
+            if (output_now && mod_mul_p_wren) {y_wren_reg, x_wren_reg} <= {xy_phase, ~xy_phase};
+            else                              {y_wren_reg, x_wren_reg} <= 2'b00;
+            
 
 endmodule
 
