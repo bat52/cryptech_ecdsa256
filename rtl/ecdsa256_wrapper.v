@@ -57,7 +57,7 @@ module ecdsa256_wrapper
    //
    // Output Mux
    //
-   wire [31:0] read_data_regs;
+   reg  [31:0] read_data_regs;
    wire [31:0] read_data_core;
 
 
@@ -116,12 +116,6 @@ module ecdsa256_wrapper
 
 
    //
-   // Read Latch
-   //
-   reg [31:0] tmp_read_data;
-
-
-   //
    // Read/Write Interface
    //
    always @(posedge clk)
@@ -149,14 +143,14 @@ module ecdsa256_wrapper
            //
            case (address)
              //
-             ADDR_NAME0:        tmp_read_data <= CORE_NAME0;
-             ADDR_NAME1:        tmp_read_data <= CORE_NAME1;
-             ADDR_VERSION:      tmp_read_data <= CORE_VERSION;
-             ADDR_CONTROL:      tmp_read_data <= {{30{1'b0}}, reg_control, 1'b0};
-             ADDR_STATUS:       tmp_read_data <= {{30{1'b0}}, reg_status,  1'b1};
-             ADDR_DUMMY:        tmp_read_data <= reg_dummy;
+             ADDR_NAME0:        read_data_regs <= CORE_NAME0;
+             ADDR_NAME1:        read_data_regs <= CORE_NAME1;
+             ADDR_VERSION:      read_data_regs <= CORE_VERSION;
+             ADDR_CONTROL:      read_data_regs <= {{30{1'b0}}, reg_control, 1'b0};
+             ADDR_STATUS:       read_data_regs <= {{30{1'b0}}, reg_status,  1'b1};
+             ADDR_DUMMY:        read_data_regs <= reg_dummy;
              //
-             default:           tmp_read_data <= 32'h00000000;
+             default:           read_data_regs <= 32'h00000000;
              //
            endcase
            //
@@ -171,7 +165,7 @@ module ecdsa256_wrapper
    reg addr_msb_last;
    always @(posedge clk) addr_msb_last <= addr_msb;
 
-   assign read_data = (addr_msb_last == ADDR_MSB_REGS) ? tmp_read_data : read_data_core;
+   assign read_data = (addr_msb_last == ADDR_MSB_REGS) ? read_data_regs : read_data_core;
 
 
 endmodule
