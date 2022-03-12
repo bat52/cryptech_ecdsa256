@@ -180,7 +180,7 @@ module tb_curve_multiplier_256;
             /* run tests */
         $display("1. Q1 = d1 * G...");
         test_curve_multiplier(ECDSA_P256_D_NSA, ECDSA_P256_QX_NSA, ECDSA_P256_QY_NSA);
-        $finish;
+        //$finish;
 
         $display("2. R = k * G...");
         test_curve_multiplier(ECDSA_P256_K_NSA, ECDSA_P256_RX_NSA, ECDSA_P256_RY_NSA);
@@ -204,7 +204,7 @@ module tb_curve_multiplier_256;
         if (ok) $display("tb_curve_multiplier_256: SUCCESS");
         else    $display("tb_curve_multiplier_256: FAILURE");
 
-        // $finish;
+        $finish;
 
     end
 
