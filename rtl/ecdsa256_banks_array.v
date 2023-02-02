@@ -58,6 +58,7 @@ module ecdsa256_banks_array
     input   [31:0]  dst_din
 );
 
+parameter USE_2PORTS_BANKS = 1;
 
     //
     // Banks
@@ -67,14 +68,22 @@ module ecdsa256_banks_array
     wire [31:0] bank_hi1_dout;
     wire [31:0] bank_hi2_dout;
     
-    assign src1_dout = !banks ? bank_lo1_dout : bank_hi1_dout;
-    assign src2_dout = !banks ? bank_lo2_dout : bank_hi2_dout;
+    if (USE_2PORTS_BANKS)
+        begin
+            assign src1_dout = bank_lo1_dout;
+            assign src2_dout = bank_lo2_dout;
+        end
+    else
+        begin
+            assign src1_dout = !banks ? bank_lo1_dout : bank_hi1_dout;
+            assign src2_dout = !banks ? bank_lo2_dout : bank_hi2_dout;            
+        end
     
     ecdsa256_operand_bank bank_operand_lo1
     (
         .clk     (clk),
         .a_addr  ({dst_operand, dst_addr}),
-        .a_wr    (dst_wren & banks),
+        .a_wr    (dst_wren & (banks|USE_2PORTS_BANKS)),
         .a_in    (dst_din),
         .b_addr  ({src1_operand, src1_addr}),
         .b_out   (bank_lo1_dout)
@@ -84,32 +93,34 @@ module ecdsa256_banks_array
     (
         .clk     (clk),
         .a_addr  ({dst_operand, dst_addr}),
-        .a_wr    (dst_wren & banks),
+        .a_wr    (dst_wren & (banks|USE_2PORTS_BANKS)),
         .a_in    (dst_din),
         .b_addr  ({src2_operand, src2_addr}),
         .b_out   (bank_lo2_dout)
     );
 
-    ecdsa256_operand_bank bank_operand_hi1
-    (
-        .clk     (clk),
-        .a_addr  ({dst_operand, dst_addr}),
-        .a_wr    (dst_wren & ~banks),
-        .a_in    (dst_din),
-        .b_addr  ({src1_operand, src1_addr}),
-        .b_out   (bank_hi1_dout)
-    );
+    if (~USE_2PORTS_BANKS)
+    begin
+        ecdsa256_operand_bank bank_operand_hi1
+        (
+            .clk     (clk),
+            .a_addr  ({dst_operand, dst_addr}),
+            .a_wr    (dst_wren & ~banks),
+            .a_in    (dst_din),
+            .b_addr  ({src1_operand, src1_addr}),
+            .b_out   (bank_hi1_dout)
+        );
 
-    ecdsa256_operand_bank bank_operand_hi2
-    (
-        .clk     (clk),
-        .a_addr  ({dst_operand, dst_addr}),
-        .a_wr    (dst_wren & ~banks),
-        .a_in    (dst_din),
-        .b_addr  ({src2_operand, src2_addr}),
-        .b_out   (bank_hi2_dout)
-    );
-
+        ecdsa256_operand_bank bank_operand_hi2
+        (
+            .clk     (clk),
+            .a_addr  ({dst_operand, dst_addr}),
+            .a_wr    (dst_wren & ~banks),
+            .a_in    (dst_din),
+            .b_addr  ({src2_operand, src2_addr}),
+            .b_out   (bank_hi2_dout)
+        );
+    end
     
 endmodule
 
