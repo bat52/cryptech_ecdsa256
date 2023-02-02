@@ -46,7 +46,8 @@ module ecdsa256_operand_bank
     //
     // BRAM
     //
-    reg [31:0] bram[0:64*8-1];
+    `include "ecdsa_uop.vh"
+    reg [31:0] bram[0:(UOP_OPERAND_INVERT_A3+1)*8-1];
 
 
     //
